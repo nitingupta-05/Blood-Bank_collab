@@ -1,0 +1,33 @@
+# Deny direct access to all PHP files except index.php and api.php (and sse/ which has its own entrypoint).
+<FilesMatch "\.(env|sql|md|log|gitignore|gitkeep)$">
+    Require all denied
+</FilesMatch>
+
+# Block direct access to storage, app code, and config.
+RewriteEngine On
+RewriteRule ^(storage|app|config|routes|database|scripts)/ - [F,L]
+
+# Send not-found to index.php (front controller handles it).
+ErrorDocument 404 /blood-bank-system/public/index.php?route=404
+
+# Prevent directory listing
+Options -Indexes
+
+# Long cache for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css           "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/png          "access plus 30 days"
+    ExpiresByType image/jpeg         "access plus 30 days"
+    ExpiresByType image/svg+xml      "access plus 30 days"
+    ExpiresByType font/woff2         "access plus 30 days"
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(self), camera=()"
+</IfModule>
