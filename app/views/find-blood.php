@@ -156,22 +156,22 @@
                     card.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
                             <div>
-                                <div style="font-weight:700; color: var(--text-dark);">${b.name}</div>
-                                <div class="text-muted" style="font-size:0.9rem;">${b.city} • ${b.address || ''}${distanceText}</div>
+                                <div style="font-weight:700; color: var(--text-dark);">${htmlEscape(b.name)}</div>
+                                <div class="text-muted" style="font-size:0.9rem;">${htmlEscape(b.city)} • ${htmlEscape(b.address || '')}${distanceText}</div>
                                 <div class="mt-2" style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-                                    <div class="blood-group o-negative" style="width:42px; height:42px; background: linear-gradient(135deg, ${BloodGroup.getColor(bloodGroup)} 0%, rgba(0,0,0,0.1) 100%);">${bloodGroup}</div>
+                                    <div class="blood-group o-negative" style="width:42px; height:42px; background: linear-gradient(135deg, ${BloodGroup.getColor(bloodGroup)} 0%, rgba(0,0,0,0.1) 100%);">${htmlEscape(bloodGroup)}</div>
                                     <div>
                                         <div style="font-weight:700;">${b.available_units} Units</div>
-                                        <div class="text-muted" style="font-size:0.85rem;">${availability}</div>
+                                        <div class="text-muted" style="font-size:0.85rem;">${htmlEscape(availability)}</div>
                                     </div>
                                 </div>
                             </div>
                             <div class="badge badge-${badgeClass.replace('badge-','')}">
-                                <i class="fas fa-tint"></i> ${availability}
+                                <i class="fas fa-tint"></i> ${htmlEscape(availability)}
                             </div>
                         </div>
                         <div class="mt-3" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                            <a class="btn btn-success btn-sm" href="tel:${b.phone || ''}">
+                            <a class="btn btn-success btn-sm" href="tel:${htmlEscape(b.phone || '')}">
                                 <i class="fas fa-phone"></i> Contact
                             </a>
                         </div>
@@ -191,14 +191,14 @@
                     item.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
                             <div>
-                                <div style="font-weight:700; color: var(--text-dark);">${d.first_name} ${d.last_name}</div>
-                                <div class="text-muted" style="font-size:0.9rem;">${d.city}${distanceText}</div>
+                                <div style="font-weight:700; color: var(--text-dark);">${htmlEscape(d.first_name)} ${htmlEscape(d.last_name)}</div>
+                                <div class="text-muted" style="font-size:0.9rem;">${htmlEscape(d.city)}${distanceText}</div>
                             </div>
                             <div style="display:flex; gap:0.75rem; align-items:center;">
                                 <div style="width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; background:${BloodGroup.getColor(d.blood_group)}; color:#fff;">
-                                    ${d.blood_group}
+                                    ${htmlEscape(d.blood_group)}
                                 </div>
-                                <a class="btn btn-secondary btn-sm" href="tel:${d.phone}">
+                                <a class="btn btn-secondary btn-sm" href="tel:${htmlEscape(d.phone)}">
                                     <i class="fas fa-phone"></i> Call
                                 </a>
                             </div>

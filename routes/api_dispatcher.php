@@ -16,14 +16,15 @@ function dispatch_api_route(string $route, string $method, PDO $pdo): void {
 
         /* Auth gate. */
         if (empty($opts['public'])) {
-            $user = RoleMiddleware::requireRole($opts['roles'] ?? [], true);
+            $roles = $opts['roles'] ?? [];
+            if (empty($roles)) $roles = admin_roles();
+            $user = RoleMiddleware::requireRole($roles, true);
         } else {
             $user = (($opts['auth'] ?? null) === 'optional') ? current_user() : null;
         }
 
-        /* CSRF for state-changing methods.  Public endpoints skip it. */
+        /* CSRF for state-changing methods unless explicitly disabled. */
         if (in_array($method, ['POST', 'PUT', 'DELETE'], true)
-            && empty($opts['public'])
             && ($opts['csrf'] ?? true)) {
             require_csrf();
         }

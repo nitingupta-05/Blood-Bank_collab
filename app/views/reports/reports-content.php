@@ -245,12 +245,14 @@ window.addEventListener('load', function () {
                 hname.textContent = d.hospital || '';
                 count.textContent = d.items.length + ' records';
                 const headers = Object.keys(d.items[0]);
-                thead.innerHTML = '<tr>' + headers.map(h => '<th>' + h.replace(/_/g,' ') + '</th>').join('') + '</tr>';
+                thead.innerHTML = '<tr>' + headers.map(h => '<th>' + htmlEscape(h.replace(/_/g,' ')) + '</th>').join('') + '</tr>';
                 tbody.innerHTML = d.items.map(row => {
                     return '<tr>' + headers.map(h => {
                         let val = row[h] ?? '';
-                        if (h === 'blood_group' && val) val = '<span class="blood-group">' + val + '</span>';
-                        return '<td>' + val + '</td>';
+                        if (h === 'blood_group' && val) {
+                            return '<td><span class="blood-group">' + htmlEscape(val) + '</span></td>';
+                        }
+                        return '<td>' + htmlEscape(val) + '</td>';
                     }).join('') + '</tr>';
                 }).join('');
             } else {

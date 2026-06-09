@@ -211,13 +211,13 @@
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td><code>${it.barcode || ''}</code></td>
-                        <td><span class="blood-group o-positive">${it.blood_group}</span></td>
-                        <td>${it.collection_date ? DateUtil.formatDate(it.collection_date, 'd M Y') : '-'}</td>
-                        <td>${it.expiry_date ? DateUtil.formatDate(it.expiry_date, 'd M Y') : '-'}</td>
-                        <td>${it.storage_location || '-'}</td>
-                        <td>${donor}</td>
-                        <td><span class="${this.statusBadge(it.status)}"><i class="fas fa-tint"></i> ${it.status}</span></td>
+                        <td><code>${htmlEscape(it.barcode || '')}</code></td>
+                        <td><span class="blood-group o-positive">${htmlEscape(it.blood_group)}</span></td>
+                        <td>${htmlEscape(it.collection_date ? DateUtil.formatDate(it.collection_date, 'd M Y') : '-')}</td>
+                        <td>${htmlEscape(it.expiry_date ? DateUtil.formatDate(it.expiry_date, 'd M Y') : '-')}</td>
+                        <td>${htmlEscape(it.storage_location || '-')}</td>
+                        <td>${htmlEscape(donor)}</td>
+                        <td><span class="${this.statusBadge(it.status)}"><i class="fas fa-tint"></i> ${htmlEscape(it.status)}</span></td>
                         <td>
                             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                                 <button class="btn btn-sm btn-success" title="Mark Used" onclick="Inventory.setStatus(${it.id}, 'used')">
@@ -330,7 +330,7 @@
                     container.innerHTML = items.map(item => `
                         <div class="stat-card">
                             <div style="text-align: center;">
-                                <div class="blood-group o-positive" style="width: 60px; height: 60px; font-size: 1.5rem; margin: 0 auto 1rem;">${item.blood_group}</div>
+                                <div class="blood-group o-positive" style="width: 60px; height: 60px; font-size: 1.5rem; margin: 0 auto 1rem;">${htmlEscape(item.blood_group)}</div>
                                 <div class="stat-card-value">${item.available || 0}</div>
                                 <div class="stat-card-label">Units Available</div>
                             </div>

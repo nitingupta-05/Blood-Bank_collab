@@ -17,7 +17,7 @@
         <input type="hidden" name="_csrf_token" value="<?php echo generate_csrf_token(); ?>">
         <input type="hidden" name="token" value="<?php echo htmlspecialchars($_GET['token'] ?? ''); ?>">
         <div class="form-group">
-            <label class="form-label">New Password (min 8 characters)</label>
+            <label class="form-label">New Password (min 8 characters with uppercase, lowercase, and a number)</label>
             <input type="password" name="password" class="form-control" required minlength="8">
         </div>
         <div class="form-group">

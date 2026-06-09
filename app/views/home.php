@@ -59,10 +59,10 @@
             <a href="?route=emergency-request" class="btn btn-danger btn-lg"><i class="fas fa-exclamation-circle"></i> Emergency</a>
         </div>
         <div class="row g-3 justify-content-center">
-            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-donors">0</div><div>Total Donors</div></div></div>
-            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-units">0</div><div>Blood Units</div></div></div>
-            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-banks">0</div><div>Blood Banks</div></div></div>
-            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-emerg">0</div><div>Emergencies Today</div></div></div>
+            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-donors"><?php echo $donors ?? 0; ?></div><div>Total Donors</div></div></div>
+            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-units"><?php echo $units ?? 0; ?></div><div>Blood Units</div></div></div>
+            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-banks"><?php echo $banks ?? 0; ?></div><div>Blood Banks</div></div></div>
+            <div class="col-6 col-md-3"><div class="live-stat"><div class="num" id="hs-emerg"><?php echo $emerg ?? 0; ?></div><div>Emergencies Today</div></div></div>
         </div>
     </div>
 </section>
@@ -178,8 +178,8 @@ async function loadHome() {
         feed.innerHTML = '';
         (em.items || []).slice(0, 3).forEach(er => {
             feed.innerHTML += `<div class="emergency-mini">
-                <strong>${er.blood_group}</strong> — ${er.quantity} units needed
-                <div class="text-muted small">${er.location || er.city || ''} • ${er.urgency_level}</div>
+                <strong>${htmlEscape(er.blood_group)}</strong> — ${htmlEscape(String(er.quantity))} units needed
+                <div class="text-muted small">${htmlEscape(er.location || er.city || '')} • ${htmlEscape(er.urgency_level)}</div>
             </div>`;
         });
         if (!(em.items||[]).length) feed.innerHTML = '<p class="text-muted">No active emergencies.</p>';

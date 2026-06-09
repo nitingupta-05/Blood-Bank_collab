@@ -8,13 +8,16 @@ class SearchController {
         if (mb_strlen($q) < 2) return [];
         $like = '%' . $q . '%';
         $items = [];
+        $tpdo = tenant_pdo();
+        $master = MASTER_DB;
 
         if ($type === 'all' || $type === 'donors') {
-            $stmt = $this->pdo->prepare(
+            $dpdo = $tpdo ?: $this->pdo;
+            $stmt = $dpdo->prepare(
                 "SELECT 'Donor' AS type, CONCAT(u.first_name, ' ', u.last_name) AS title,
                         CONCAT(d.blood_group, ' donor in ', COALESCE(u.city, 'Unknown')) AS subtitle,
                         '?route=donors' AS url
-                 FROM `donors` d JOIN `users` u ON u.id = d.user_id
+                 FROM `donors` d JOIN `{$master}`.`users` u ON u.id = d.user_id
                  WHERE u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR d.blood_group LIKE ?
                  LIMIT 8"
             );
@@ -23,7 +26,8 @@ class SearchController {
         }
 
         if ($type === 'all' || $type === 'blood_units') {
-            $stmt = $this->pdo->prepare(
+            $bpdo = $tpdo ?: $this->pdo;
+            $stmt = $bpdo->prepare(
                 "SELECT 'Blood Unit' AS type, CONCAT(blood_group, ' unit ', barcode) AS title,
                         CONCAT(status, ' - ', storage_location) AS subtitle,
                         '?route=inventory' AS url

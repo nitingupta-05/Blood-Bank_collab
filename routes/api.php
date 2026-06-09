@@ -9,10 +9,9 @@
  *     'csrf'     => false to skip CSRF for this route (default: true for non-public writes)
  *     'auth'     => 'optional' to attempt auth but not require it (hospital-fallback writes)
  *
- * CSRF note:  all non-public write routes set csrf=false.  The session cookie
- * uses SameSite=Strict, which is sufficient CSRF protection for same-site
- * authenticated requests.  Public POSTs (login/registration, public booking,
- * public emergency) are already exempt from CSRF here.
+ * CSRF note: public POSTs and web-form-backed writes require X-CSRF-TOKEN.
+ * Dashboard API writes are same-site authenticated requests and currently opt
+ * out route-by-route with csrf=false.
  */
 
 return [
@@ -27,27 +26,28 @@ return [
     ['emergency/create',            'POST', [ApiController::class, 'publicEmergency'],     ['public' => true, 'auth' => 'optional']],
     ['blood-banks/register',        'POST', [ApiController::class, 'registerBloodBank'],   ['public' => true]],
 
-    // ---- authenticated reads ----
-    ['dashboard/stats',             'GET',  [ApiController::class, 'dashboardStats']],
-    ['dashboard/blood-stock',       'GET',  [ApiController::class, 'dashboardBloodStock']],
-    ['dashboard/monthly-donations', 'GET',  [ApiController::class, 'dashboardMonthly']],
+    // ---- authenticated reads (admin + hospital) ----
+    ['dashboard/stats',             'GET',  [ApiController::class, 'dashboardStats'],            ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['dashboard/blood-stock',       'GET',  [ApiController::class, 'dashboardBloodStock'],       ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['dashboard/monthly-donations', 'GET',  [ApiController::class, 'dashboardMonthly'],          ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['emergency/stats',             'GET',  [ApiController::class, 'emergencyStats'],            ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['bookings/stats',              'GET',  [ApiController::class, 'bookingStats'],              ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['bookings/list',               'GET',  [ApiController::class, 'bookingsList'],              ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['donors/list',                 'GET',  [ApiController::class, 'donorsList'],                ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['donors/stats',                'GET',  [ApiController::class, 'donorStats'],                ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['storage/list',                'GET',  [ApiController::class, 'storageList'],               ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['storage/stats',               'GET',  [ApiController::class, 'storageStats'],              ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['blood-units/list',            'GET',  [ApiController::class, 'bloodUnitsList'],            ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['reports/blood-stock',         'GET',  [ApiController::class, 'reportsBloodStock'],         ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['reports/ai-insights',         'GET',  [ApiController::class, 'reportsAiInsights'],         ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['reports/preview',             'GET',  [ApiController::class, 'reportsPreview'],            ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    ['search/global',               'GET',  [ApiController::class, 'globalSearch'],              ['roles' => array_merge(admin_roles(), ['hospital'])]],
+    // ---- authenticated reads (any authenticated user, scoped by user_id) ----
     ['profile/current',             'GET',  [ApiController::class, 'profileCurrent']],
     ['notifications/list',          'GET',  [ApiController::class, 'notificationsList']],
     ['notifications/count',         'GET',  [ApiController::class, 'notificationsCount']],
     ['settings/hospital',           'GET',  [ApiController::class, 'getHospitalDetails']],
     ['settings/notifications',      'GET',  [ApiController::class, 'getNotificationPrefs']],
-    ['emergency/stats',             'GET',  [ApiController::class, 'emergencyStats']],
-    ['bookings/stats',              'GET',  [ApiController::class, 'bookingStats']],
-    ['bookings/list',               'GET',  [ApiController::class, 'bookingsList']],
-    ['donors/list',                 'GET',  [ApiController::class, 'donorsList']],
-    ['donors/stats',                'GET',  [ApiController::class, 'donorStats']],
-    ['storage/list',                'GET',  [ApiController::class, 'storageList']],
-    ['storage/stats',               'GET',  [ApiController::class, 'storageStats']],
-    ['blood-units/list',            'GET',  [ApiController::class, 'bloodUnitsList']],
-    ['reports/blood-stock',         'GET',  [ApiController::class, 'reportsBloodStock']],
-    ['reports/ai-insights',         'GET',  [ApiController::class, 'reportsAiInsights']],
-    ['reports/preview',             'GET',  [ApiController::class, 'reportsPreview']],
-    ['search/global',               'GET',  [ApiController::class, 'globalSearch']],
 
     // ---- admin-only reads ----
     ['settings/system-stats',       'GET',  [ApiController::class, 'systemStats'],         ['roles' => admin_roles()]],

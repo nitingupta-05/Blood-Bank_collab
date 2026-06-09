@@ -186,21 +186,21 @@ const Emergency = {
             card.innerHTML = `
                 <div class="card-header">
                     <div>
-                        <h3 class="card-title">${item.patient_name || 'Unnamed Patient'} needs ${item.blood_group}</h3>
-                        <p class="page-subtitle">${item.location || '-'} | ${item.quantity} unit(s) | ${item.first_name || ''} ${item.last_name || ''}</p>
+                        <h3 class="card-title">${htmlEscape(item.patient_name || 'Unnamed Patient')} needs ${htmlEscape(item.blood_group)}</h3>
+                        <p class="page-subtitle">${htmlEscape(item.location || '-')} | ${item.quantity} unit(s) | ${htmlEscape(item.first_name || '')} ${htmlEscape(item.last_name || '')}</p>
                     </div>
                     <span class="${meta.cls}"><i class="fas fa-clock"></i> ${meta.label}</span>
                 </div>
                 <div class="card-body">
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1rem;">
-                        <div><strong>Contact</strong><div class="text-muted">${item.contact_phone || item.phone || '-'}</div></div>
-                        <div><strong>Deadline</strong><div class="text-danger countdown" data-expires="${item.expires_at || ''}">${this.timeLeft(item.expires_at)}</div></div>
-                        <div><strong>Posted</strong><div class="text-muted">${item.created_at || '-'}</div></div>
-                        <div><strong>Status</strong><div class="text-muted">${item.status}</div></div>
+                        <div><strong>Contact</strong><div class="text-muted">${htmlEscape(item.contact_phone || item.phone || '-')}</div></div>
+                        <div><strong>Deadline</strong><div class="text-danger countdown" data-expires="${htmlEscape(item.expires_at || '')}">${this.timeLeft(item.expires_at)}</div></div>
+                        <div><strong>Posted</strong><div class="text-muted">${htmlEscape(item.created_at || '-')}</div></div>
+                        <div><strong>Status</strong><div class="text-muted">${htmlEscape(item.status)}</div></div>
                     </div>
                     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
                         <button class="btn btn-success" onclick="Emergency.fulfill(${item.id})"><i class="fas fa-check"></i> Mark as Fulfilled</button>
-                        <a class="btn btn-secondary" href="tel:${item.contact_phone || item.phone || ''}"><i class="fas fa-phone"></i> Call Contact</a>
+                        <a class="btn btn-secondary" href="tel:${htmlEscape(item.contact_phone || item.phone || '')}"><i class="fas fa-phone"></i> Call Contact</a>
                     </div>
                 </div>
             `;

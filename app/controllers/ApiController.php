@@ -15,25 +15,11 @@ class ApiController {
      * ============================================================ */
 
     public function publicStats(array $_): void {
-        $stats = [
-            'donors' => (int) $this->pdo->query("SELECT COUNT(*) FROM `donors`")->fetchColumn(),
-            'units'  => (int) $this->pdo->query("SELECT COUNT(*) FROM `blood_units` WHERE status='available' AND expiry_date > CURDATE()")->fetchColumn(),
-            'banks'  => (int) $this->pdo->query("SELECT COUNT(*) FROM `blood_banks`")->fetchColumn(),
-            'emerg'  => (int) $this->pdo->query("SELECT COUNT(*) FROM `emergency_requests` WHERE DATE(created_at) = CURDATE()")->fetchColumn(),
-        ];
-        json_out(['ok' => true, 'stats' => $stats]);
+        json_out(['ok' => true, 'stats' => TenantHelper::publicStats($this->pdo)]);
     }
 
     public function publicBloodStock(array $_): void {
-        $rows = $this->pdo->query(
-            "SELECT blood_group, COUNT(*) AS c
-             FROM `blood_units` WHERE status='available' AND expiry_date > CURDATE()
-             GROUP BY blood_group"
-        )->fetchAll();
-        $map = [];
-        foreach ($rows as $r) $map[$r['blood_group']] = (int) $r['c'];
-        $available = array_map(fn($g) => $map[$g] ?? 0, BLOOD_GROUPS);
-        json_out(['ok' => true, 'labels' => BLOOD_GROUPS, 'available' => $available]);
+        json_out(['ok' => true, 'labels' => BLOOD_GROUPS, 'available' => TenantHelper::publicBloodStock($this->pdo)]);
     }
 
     public function publicBloodBanks(array $_): void {
@@ -318,7 +304,8 @@ class ApiController {
      * ============================================================ */
 
     public function reportsBloodStock(array $_): void {
-        $rows = $this->pdo->query(
+        $tpdo = tenant_pdo() ?: $this->pdo;
+        $rows = $tpdo->query(
             "SELECT blood_group, COUNT(*) AS c
              FROM `blood_units` WHERE status='available' AND expiry_date > CURDATE()
              GROUP BY blood_group ORDER BY blood_group"

@@ -128,9 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const alert = sa.current_temperature > 6 || sa.current_temperature < 2;
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.innerHTML = `<div class="card-header"><h3 class="card-title">${sa.name}</h3>
+                card.innerHTML = `<div class="card-header"><h3 class="card-title">${htmlEscape(sa.name)}</h3>
                     <span class="badge ${alert ? 'badge-warning' : 'badge-success'}">${alert ? 'Alert' : 'Normal'}</span></div>
-                    <div class="card-body"><p><strong>Bank:</strong> ${sa.blood_bank_name}</p>
+                    <div class="card-body"><p><strong>Bank:</strong> ${htmlEscape(sa.blood_bank_name)}</p>
                     <p><strong>Occupancy:</strong> ${sa.current_occupancy} / ${sa.capacity} (${pct}%)</p>
                     <p><strong>Temp:</strong> ${sa.current_temperature ?? '-'}°C</p></div>`;
                 grid.appendChild(card);

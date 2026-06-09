@@ -23,7 +23,8 @@ class SettingsController {
     }
 
     public function getNotificationSettings(int $userId): array {
-        $stmt = $this->pdo->prepare("SELECT * FROM `notification_settings` WHERE user_id = ?");
+        $tpdo = tenant_pdo() ?: $this->pdo;
+        $stmt = $tpdo->prepare("SELECT * FROM `notification_settings` WHERE user_id = ?");
         $stmt->execute([$userId]);
         $row = $stmt->fetch();
         return $row ?: ['email_notifications' => 1, 'sms_notifications' => 0, 'in_app_notifications' => 1];
@@ -33,16 +34,17 @@ class SettingsController {
         $email  = !empty($data['email_notifications']) ? 1 : 0;
         $sms    = !empty($data['sms_notifications']) ? 1 : 0;
         $inApp  = !empty($data['in_app_notifications']) ? 1 : 0;
+        $tpdo = tenant_pdo() ?: $this->pdo;
 
-        $stmt = $this->pdo->prepare("SELECT id FROM `notification_settings` WHERE user_id = ?");
+        $stmt = $tpdo->prepare("SELECT id FROM `notification_settings` WHERE user_id = ?");
         $stmt->execute([$userId]);
 
         if ($stmt->fetch()) {
-            $ok = $this->pdo->prepare(
+            $ok = $tpdo->prepare(
                 "UPDATE `notification_settings` SET email_notifications = ?, sms_notifications = ?, in_app_notifications = ? WHERE user_id = ?"
             )->execute([$email, $sms, $inApp, $userId]);
         } else {
-            $ok = $this->pdo->prepare(
+            $ok = $tpdo->prepare(
                 "INSERT INTO `notification_settings` (user_id, email_notifications, sms_notifications, in_app_notifications) VALUES (?, ?, ?, ?)"
             )->execute([$userId, $email, $sms, $inApp]);
         }
@@ -64,7 +66,7 @@ class SettingsController {
     }
 
     public function getBloodStockSummary(): array {
-        $model = new BloodUnit($this->pdo);
+        $model = new BloodUnit();
         return $model->getInventorySummary();
     }
 }

@@ -4,7 +4,7 @@ class DonorController {
     private Donor $model;
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
-        $this->model = new Donor($pdo);
+        $this->model = new Donor();
     }
 
     public function add(array $data, int $actorId): array {
@@ -35,10 +35,12 @@ class DonorController {
     }
 
     public function list(): array {
-        $stmt = $this->pdo->query(
+        $pdo = $this->model->pdo();
+        $master = MASTER_DB;
+        $stmt = $pdo->query(
             "SELECT d.*, u.first_name, u.last_name, u.phone, u.city, u.email
              FROM `donors` d
-             JOIN `users` u ON u.id = d.user_id
+             JOIN `{$master}`.`users` u ON u.id = d.user_id
              ORDER BY d.created_at DESC"
         );
         return $stmt->fetchAll();

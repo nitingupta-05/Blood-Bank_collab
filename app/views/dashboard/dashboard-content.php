@@ -282,13 +282,13 @@
                     const items = res.items.slice(0, 3);
                     container.innerHTML = items.map(d => `
                         <div style="display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
-                            <div class="blood-group o-positive">${d.blood_group}</div>
+                            <div class="blood-group o-positive">${htmlEscape(d.blood_group)}</div>
                             <div style="flex: 1;">
-                                <div style="font-weight: 600; color: var(--text-dark);">${d.first_name} ${d.last_name}</div>
-                                <div style="font-size: 0.85rem; color: var(--text-light);">${d.last_donation_date || 'Never'}</div>
+                                <div style="font-weight: 600; color: var(--text-dark);">${htmlEscape(d.first_name)} ${htmlEscape(d.last_name)}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-light);">${htmlEscape(d.last_donation_date || 'Never')}</div>
                             </div>
                             <span class="badge badge-success">
-                                <i class="fas fa-check"></i> ${d.eligibility_status}
+                                <i class="fas fa-check"></i> ${htmlEscape(d.eligibility_status)}
                             </span>
                         </div>
                     `).join('');
@@ -315,11 +315,11 @@
                             <div style="padding: 1rem; background: ${bgClass}; border-left: 4px solid ${borderColor}; border-radius: 8px; margin-bottom: 1rem;">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                     <div>
-                                        <div style="font-weight: 600; color: var(--text-dark);">${em.first_name} ${em.last_name}</div>
-                                        <div style="font-size: 0.85rem; color: var(--text-light);">Needs ${em.blood_group} Blood</div>
+                                        <div style="font-weight: 600; color: var(--text-dark);">${htmlEscape(em.first_name)} ${htmlEscape(em.last_name)}</div>
+                                        <div style="font-size: 0.85rem; color: var(--text-light);">Needs ${htmlEscape(em.blood_group)} Blood</div>
                                     </div>
                                     <span class="${badgeClass}">
-                                        <i class="fas fa-exclamation"></i> ${em.urgency_level}
+                                        <i class="fas fa-exclamation"></i> ${htmlEscape(em.urgency_level)}
                                     </span>
                                 </div>
                                 <div style="font-size: 0.85rem; color: var(--text-light);">Qty: ${em.quantity} units</div>

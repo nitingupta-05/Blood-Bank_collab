@@ -52,10 +52,12 @@ CREATE TABLE `blood_banks` (
   `latitude`        DECIMAL(10,8) DEFAULT NULL,
   `longitude`       DECIMAL(11,8) DEFAULT NULL,
   `capacity`        INT UNSIGNED DEFAULT NULL,
+  `tenant_db_name`  VARCHAR(64) DEFAULT NULL,
   `created_at`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_banks_city` (`city`),
-  KEY `idx_banks_email` (`email`)
+  KEY `idx_banks_email` (`email`),
+  KEY `idx_banks_tenant_db` (`tenant_db_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------

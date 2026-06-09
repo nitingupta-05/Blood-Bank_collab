@@ -26,13 +26,13 @@
 
         <?php if (isset($_SESSION['error'])): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                <?php echo htmlspecialchars($_SESSION['error'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['error']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                <?php echo htmlspecialchars($_SESSION['success'], ENT_QUOTES, 'UTF-8'); unset($_SESSION['success']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -135,7 +135,7 @@
                     <div class="col-md-6">
                         <label class="form-label">Password *</label>
                         <input type="password" class="form-control" name="password" required>
-                        <div class="text-muted" style="font-size:0.85rem;">Minimum 8 characters.</div>
+                        <div class="text-muted" style="font-size:0.85rem;">Minimum 8 characters with uppercase, lowercase, and a number.</div>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">

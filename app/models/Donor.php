@@ -3,6 +3,10 @@ class Donor extends Model {
 
     protected string $table = 'donors';
 
+    public function __construct(?PDO $pdo = null) {
+        parent::__construct($pdo ?: tenant_pdo());
+    }
+
     public function getByUserId(int $userId): ?array {
         return $this->findBy('user_id', $userId);
     }
@@ -32,10 +36,11 @@ class Donor extends Model {
     }
 
     public function findEligibleByGroupAndCity(string $bloodGroup, string $city): array {
+        $master = MASTER_DB;
         $stmt = $this->pdo->prepare(
             "SELECT d.*, u.first_name, u.last_name, u.phone, u.city, u.latitude, u.longitude
-             FROM `donors` d
-             JOIN `users` u ON u.id = d.user_id
+             FROM `{$this->table}` d
+             JOIN `{$master}`.`users` u ON u.id = d.user_id
              WHERE d.blood_group = ?
                AND d.eligibility_status = 'eligible'
                AND u.is_active = 1

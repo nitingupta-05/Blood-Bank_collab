@@ -49,7 +49,12 @@ document.getElementById('emForm').addEventListener('submit', async e => {
     const body = Object.fromEntries(fd.entries());
     body.quantity = parseInt(body.quantity, 10);
     const r = await fetch(`<?php echo APP_URL; ?>/api.php?route=public/emergency`, {
-        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+        method: 'POST',
+        headers: {
+            'Content-Type':'application/json',
+            'X-CSRF-TOKEN': '<?php echo generate_csrf_token(); ?>'
+        },
+        body: JSON.stringify(body)
     });
     const d = await r.json();
     if (d.ok) { Toast.success('Emergency posted! Donors notified: ' + (d.notified||0)); location.href='?route=emergency-requests'; }

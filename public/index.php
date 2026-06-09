@@ -19,7 +19,8 @@ $route = (string) ($_GET['route'] ?? '');
 /* Home page is a plain view (no auth). */
 if ($route === '' || $route === 'home') {
     $public = current_user() === null;
-    view('home', ['public' => $public]);
+    $stats = TenantHelper::publicStats($pdo);
+    view('home', ['public' => $public, 'donors' => $stats['donors'], 'units' => $stats['units'], 'banks' => $stats['banks'], 'emerg' => $stats['emerg']]);
     exit;
 }
 

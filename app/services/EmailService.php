@@ -13,9 +13,11 @@ class EmailService {
         if (!$to) return false;
 
         $subject = '[' . APP_NAME . '] ' . $subject;
+        $serverHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $serverHost = preg_replace('/[^a-zA-Z0-9.\-:\[\]]/', '', $serverHost);
         $headers = [
-            'From: ' . APP_NAME . ' <noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '>',
-            'Reply-To: noreply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'),
+            'From: ' . APP_NAME . ' <noreply@' . $serverHost . '>',
+            'Reply-To: noreply@' . $serverHost,
             'X-Mailer: PHP/' . PHP_VERSION,
             'MIME-Version: 1.0',
             'Content-Type: text/plain; charset=UTF-8',

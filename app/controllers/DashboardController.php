@@ -1,25 +1,30 @@
 <?php
 class DashboardController {
     private PDO $pdo;
-    public function __construct(PDO $pdo) { $this->pdo = $pdo; }
+    private ?PDO $tpdo;
+    public function __construct(PDO $pdo) { 
+        $this->pdo = $pdo; 
+        $this->tpdo = tenant_pdo() ?: $pdo;
+    }
 
     public function stats(): array {
         $stats = [];
+        $master = MASTER_DB;
         $rows = [
             'total_units'              => "SELECT COUNT(*) FROM `blood_units` WHERE status = 'available'",
             'available_donors'         => "SELECT COUNT(*) FROM `donors` WHERE eligibility_status = 'eligible'",
-            'active_emergency_requests'=> "SELECT COUNT(*) FROM `emergency_requests` WHERE status = 'active'",
-            'fulfilled_today'          => "SELECT COUNT(*) FROM `emergency_requests` WHERE status = 'fulfilled' AND fulfilled_at >= CURDATE()",
+            'active_emergency_requests'=> "SELECT COUNT(*) FROM `{$master}`.`emergency_requests` WHERE status = 'active'",
+            'fulfilled_today'          => "SELECT COUNT(*) FROM `{$master}`.`emergency_requests` WHERE status = 'fulfilled' AND fulfilled_at >= CURDATE()",
             'expiring_soon_units'      => "SELECT COUNT(*) FROM `blood_units` WHERE status = 'available' AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)",
         ];
         foreach ($rows as $k => $sql) {
-            $stats[$k] = (int) $this->pdo->query($sql)->fetchColumn();
+            $stats[$k] = (int) $this->tpdo->query($sql)->fetchColumn();
         }
         return $stats;
     }
 
     public function bloodStock(int $currentUserId, NotificationDispatcher $notif): array {
-        $rows = $this->pdo->query(
+        $rows = $this->tpdo->query(
             "SELECT blood_group, COUNT(*) AS c
              FROM `blood_units` WHERE status = 'available' AND expiry_date > CURDATE()
              GROUP BY blood_group ORDER BY blood_group"
@@ -36,7 +41,7 @@ class DashboardController {
             }
         }
 
-        $expiring = $this->pdo->query(
+        $expiring = $this->tpdo->query(
             "SELECT blood_group, COUNT(*) AS c
              FROM `blood_units`
              WHERE status = 'available' AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
@@ -52,7 +57,7 @@ class DashboardController {
     }
 
     public function monthlyDonations(): array {
-        $rows = $this->pdo->query(
+        $rows = $this->tpdo->query(
             "SELECT DATE_FORMAT(collection_date, '%Y-%m') AS month, COUNT(*) AS c
              FROM `blood_units`
              WHERE collection_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)

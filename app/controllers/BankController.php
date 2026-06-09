@@ -13,7 +13,12 @@ class BankController {
         $capacity = isset($data['capacity']) ? max(0, (int) $data['capacity']) : null;
 
         if (!$name || !$email || !$phone || !$address || !$city || !$password) {
-            return ['ok' => false, 'error' => 'Name, valid email, phone, address, city, and password (min 8 chars) are required'];
+            return ['ok' => false, 'error' => 'Name, valid email, phone, address, city, and password (min 8 chars with uppercase, lowercase, and a number) are required'];
+        }
+
+        $userModel = new User($this->pdo);
+        if ($userModel->findByEmail($email)) {
+            return ['ok' => false, 'error' => 'Email already registered'];
         }
 
         $this->pdo->beginTransaction();
@@ -28,10 +33,9 @@ class BankController {
                 'capacity'       => $capacity,
             ]);
 
-            $userModel = new User($this->pdo);
-            if ($userModel->findByEmail($email)) {
-                throw new RuntimeException('Email already registered');
-            }
+            $tenantDbName = TenantHelper::createDatabase($this->pdo, $bankId);
+            $this->pdo->prepare("UPDATE `blood_banks` SET tenant_db_name = ? WHERE id = ?")
+                ->execute([$tenantDbName, $bankId]);
 
             $contactPerson = trim((string) ($data['contact_person'] ?? '')) ?: $name;
             $parts = preg_split('/\s+/', $contactPerson);
@@ -52,7 +56,7 @@ class BankController {
 
             $this->pdo->commit();
             audit($this->pdo, 'bank.register', (int) $userId, 'blood_banks:' . $bankId);
-            return ['ok' => true, 'blood_bank_id' => $bankId, 'user_id' => (int) $userId];
+            return ['ok' => true, 'blood_bank_id' => $bankId, 'tenant_db_name' => $tenantDbName, 'user_id' => (int) $userId];
         } catch (Throwable $e) {
             $this->pdo->rollBack();
             return ['ok' => false, 'error' => $e->getMessage()];
@@ -64,8 +68,9 @@ class BankController {
     }
 
     public function bloodSearch(string $bloodGroup, string $city, int $units, ?float $lat = null, ?float $lon = null): array {
+        TenantHelper::ensureMasterSchema($this->pdo);
         $stmt = $this->pdo->prepare(
-            "SELECT bb.id, bb.name, bb.address, bb.city, bb.phone, bb.latitude, bb.longitude,
+            "SELECT bb.id, bb.name, bb.address, bb.city, bb.phone, bb.latitude, bb.longitude, bb.tenant_db_name,
                     COUNT(bu.id) AS available_units
              FROM `blood_banks` bb
              LEFT JOIN `blood_units` bu
@@ -74,6 +79,7 @@ class BankController {
                    AND bu.status        = 'available'
                    AND bu.expiry_date   > CURDATE()
              WHERE bb.city LIKE ?
+               AND (bb.tenant_db_name IS NULL OR bb.tenant_db_name = '')
              GROUP BY bb.id
              HAVING available_units >= ?
              ORDER BY available_units DESC, bb.name ASC
@@ -81,6 +87,32 @@ class BankController {
         );
         $stmt->execute([$bloodGroup, '%' . $city . '%', $units]);
         $banks = $stmt->fetchAll();
+
+        $tenantStmt = $this->pdo->prepare(
+            "SELECT id, name, address, city, phone, latitude, longitude, tenant_db_name
+             FROM `blood_banks`
+             WHERE city LIKE ? AND tenant_db_name IS NOT NULL AND tenant_db_name <> ''
+             ORDER BY name ASC
+             LIMIT 100"
+        );
+        $tenantStmt->execute(['%' . $city . '%']);
+        foreach ($tenantStmt->fetchAll() as $bank) {
+            try {
+                $tenantPdo = TenantHelper::connect((string) $bank['tenant_db_name']);
+                $countStmt = $tenantPdo->prepare(
+                    "SELECT COUNT(*) FROM `blood_units`
+                     WHERE blood_group = ? AND status = 'available' AND expiry_date > CURDATE()"
+                );
+                $countStmt->execute([$bloodGroup]);
+                $available = (int) $countStmt->fetchColumn();
+                if ($available >= $units) {
+                    $bank['available_units'] = $available;
+                    $banks[] = $bank;
+                }
+            } catch (Throwable $e) {
+                error_log('[tenant-search] bank ' . ($bank['id'] ?? '?') . ': ' . $e->getMessage());
+            }
+        }
 
         if ($lat !== null && $lon !== null) {
             foreach ($banks as &$b) {
@@ -92,8 +124,12 @@ class BankController {
             unset($b);
             usort($banks, fn($a, $b) => ($a['distance_km'] ?? PHP_FLOAT_MAX) <=> ($b['distance_km'] ?? PHP_FLOAT_MAX));
         } else {
-            foreach ($banks as &$b) { $b['distance_km'] = null; }
+            foreach ($banks as &$b) {
+                $b['available_units'] = (int) $b['available_units'];
+                $b['distance_km'] = null;
+            }
             unset($b);
+            usort($banks, fn($a, $b) => ((int) $b['available_units'] <=> (int) $a['available_units']) ?: strcmp((string) $a['name'], (string) $b['name']));
         }
 
         $donors = (new Donor($this->pdo))->findEligibleByGroupAndCity($bloodGroup, $city);

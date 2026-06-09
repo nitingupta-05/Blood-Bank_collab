@@ -10,30 +10,35 @@
 class NotificationDispatcher {
 
     private PDO $pdo;
+    private ?PDO $tpdo;
 
-    public function __construct(PDO $pdo) { $this->pdo = $pdo; }
+    public function __construct(PDO $pdo) {
+        $this->pdo = $pdo;
+        $this->tpdo = tenant_pdo();
+    }
 
     public function send(int $userId, string $type, string $message, string $channel = 'in_app', ?string $relatedType = null, ?int $relatedId = null): int {
         $userId = (int) $userId;
         $type = in_array($type, NOTIFICATION_TYPES, true) ? $type : 'system';
         $channel = in_array($channel, NOTIFICATION_CHANNELS, true) ? $channel : 'in_app';
+        $tpdo = $this->tpdo ?: $this->pdo;
 
         $status = 'pending';
         try {
-            $stmt = $this->pdo->prepare(
+            $stmt = $tpdo->prepare(
                 "INSERT INTO `notifications` (user_id, type, message, channel, delivery_status, related_type, related_id)
                  VALUES (?, ?, ?, ?, 'pending', ?, ?)"
             );
             $stmt->execute([$userId, $type, $message, $channel, $relatedType, $relatedId]);
-            $id = (int) $this->pdo->lastInsertId();
+            $id = (int) $tpdo->lastInsertId();
 
             $status = match ($channel) {
                 'email' => $this->sendEmail($userId, $message) ? 'sent' : 'failed',
                 'sms'   => $this->sendSms($userId, $message)   ? 'sent' : 'failed',
                 default => 'sent',
             };
-            $this->pdo->prepare("UPDATE `notifications` SET delivery_status = ? WHERE id = ?")
-                      ->execute([$status, $id]);
+            $tpdo->prepare("UPDATE `notifications` SET delivery_status = ? WHERE id = ?")
+                 ->execute([$status, $id]);
             return $id;
         } catch (Throwable $e) {
             error_log('[Notification] ' . $e->getMessage());
@@ -56,8 +61,10 @@ class NotificationDispatcher {
     }
 
     public function sendToEligibleDonorsInCity(string $city, string $type, string $message, string $channel = 'in_app'): int {
-        $stmt = $this->pdo->prepare(
-            "SELECT u.id FROM `users` u
+        $tpdo = $this->tpdo ?: $this->pdo;
+        $master = MASTER_DB;
+        $stmt = $tpdo->prepare(
+            "SELECT u.id FROM `{$master}`.`users` u
              JOIN `donors` d ON d.user_id = u.id
              WHERE u.is_active = 1 AND u.city LIKE ? AND d.eligibility_status = 'eligible'"
         );

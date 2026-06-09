@@ -25,9 +25,11 @@ $lastEventId = (int) ($_SERVER['HTTP_LAST_EVENT_ID'] ?? 0);
 echo "retry: 5000\n\n";
 @flush();
 
+$npdo = $GLOBALS['tenantPdo'] ?? $pdo;
+
 try {
     while (!connection_aborted()) {
-        $stmt = $pdo->prepare(
+        $stmt = $npdo->prepare(
             "SELECT id, type, message, channel, delivery_status, related_type, related_id, created_at
              FROM `notifications` WHERE user_id = ? AND id > ? ORDER BY id ASC LIMIT 20"
         );

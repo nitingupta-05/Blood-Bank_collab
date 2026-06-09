@@ -12,7 +12,11 @@ class ValidationHelper {
 
     public static function password(?string $v): ?string {
         $v = (string) $v;
-        return strlen($v) >= 8 ? $v : null;
+        if (strlen($v) < 8) return null;
+        if (!preg_match('/[A-Z]/', $v)) return null;
+        if (!preg_match('/[a-z]/', $v)) return null;
+        if (!preg_match('/[0-9]/', $v)) return null;
+        return $v;
     }
 
     public static function phone(?string $v): ?string {

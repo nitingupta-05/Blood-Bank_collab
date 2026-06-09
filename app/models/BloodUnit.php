@@ -3,13 +3,17 @@ class BloodUnit extends Model {
 
     protected string $table = 'blood_units';
 
+    public function __construct(?PDO $pdo = null) {
+        parent::__construct($pdo ?: tenant_pdo());
+    }
+
     public function generateBarcode(): string {
         return 'BB' . date('Ymd') . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
     }
 
     public function listForBank(int $bankId, array $filters = [], int $page = 1, int $perPage = 20): array {
-        $where = ['bu.blood_bank_id = ?'];
-        $params = [$bankId];
+        $where = ['1=1'];
+        $params = [];
 
         if (!empty($filters['blood_group']) && in_array($filters['blood_group'], BLOOD_GROUPS, true)) {
             $where[] = 'bu.blood_group = ?';
@@ -25,25 +29,26 @@ class BloodUnit extends Model {
         }
 
         $offset = max(0, ($page - 1) * $perPage);
+        $master = MASTER_DB;
         $sql = "SELECT bu.*, bb.name AS blood_bank_name,
                        u.first_name AS donor_first, u.last_name AS donor_last
-                FROM `blood_units` bu
-                LEFT JOIN `blood_banks` bb ON bb.id = bu.blood_bank_id
-                LEFT JOIN `users` u       ON u.id  = bu.donor_id
+                FROM `{$this->table}` bu
+                LEFT JOIN `{$master}`.`blood_banks` bb ON bb.id = ?
+                LEFT JOIN `{$master}`.`users` u       ON u.id  = bu.donor_id
                 WHERE " . implode(' AND ', $where) . "
                 ORDER BY bu.expiry_date ASC
                 LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, [$bankId]));
         return $stmt->fetchAll();
     }
 
     public function getAvailableByBankAndGroup(int $bankId, string $bloodGroup): int {
         $stmt = $this->pdo->prepare(
-            "SELECT COUNT(*) AS c FROM `blood_units`
-             WHERE blood_bank_id = ? AND blood_group = ? AND status = 'available' AND expiry_date > CURDATE()"
+            "SELECT COUNT(*) AS c FROM `{$this->table}`
+             WHERE blood_group = ? AND status = 'available' AND expiry_date > CURDATE()"
         );
-        $stmt->execute([$bankId, $bloodGroup]);
+        $stmt->execute([$bloodGroup]);
         return (int) $stmt->fetch()['c'];
     }
 

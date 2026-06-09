@@ -105,19 +105,26 @@ class Booking extends Model {
 class StorageArea extends Model {
     protected string $table = 'storage_areas';
 
+    public function __construct(?PDO $pdo = null) {
+        parent::__construct($pdo ?: tenant_pdo());
+    }
+
     public function listForBank(?int $bankId = null): array {
-        $sql = "SELECT sa.*, bb.name AS blood_bank_name FROM `storage_areas` sa
-                LEFT JOIN `blood_banks` bb ON bb.id = sa.blood_bank_id";
-        if ($bankId) $sql .= " WHERE sa.blood_bank_id = " . (int) $bankId;
+        $master = MASTER_DB;
+        $sql = "SELECT sa.*, bb.name AS blood_bank_name FROM `{$this->table}` sa
+                LEFT JOIN `{$master}`.`blood_banks` bb ON bb.id = ?";
+        $params = [$bankId ?: 0];
         $sql .= " ORDER BY sa.id ASC";
-        return $this->pdo->query($sql)->fetchAll();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     public function getStats(): array {
-        $fridges = (int) $this->pdo->query("SELECT COUNT(*) AS c FROM `storage_areas`")->fetch()['c'];
-        $capacity = (int) ($this->pdo->query("SELECT COALESCE(SUM(capacity),0) AS c FROM `storage_areas`")->fetch()['c']);
-        $stored   = (int) ($this->pdo->query("SELECT COALESCE(SUM(current_occupancy),0) AS c FROM `storage_areas`")->fetch()['c']);
-        $avg = (float) ($this->pdo->query("SELECT AVG(current_temperature) AS a FROM `storage_areas` WHERE current_temperature IS NOT NULL")->fetch()['a'] ?? 0);
+        $fridges = (int) $this->pdo->query("SELECT COUNT(*) AS c FROM `{$this->table}`")->fetch()['c'];
+        $capacity = (int) ($this->pdo->query("SELECT COALESCE(SUM(capacity),0) AS c FROM `{$this->table}`")->fetch()['c']);
+        $stored   = (int) ($this->pdo->query("SELECT COALESCE(SUM(current_occupancy),0) AS c FROM `{$this->table}`")->fetch()['c']);
+        $avg = (float) ($this->pdo->query("SELECT AVG(current_temperature) AS a FROM `{$this->table}` WHERE current_temperature IS NOT NULL")->fetch()['a'] ?? 0);
         return [
             'fridges'         => $fridges,
             'capacity'        => $capacity,
@@ -130,7 +137,7 @@ class StorageArea extends Model {
         $this->pdo->prepare("INSERT INTO `temperature_logs` (storage_area_id, temperature) VALUES (?, ?)")
                   ->execute([$storageId, $temp]);
         $this->pdo->prepare(
-            "UPDATE `storage_areas` SET current_temperature = ?, last_temperature_check = NOW() WHERE id = ?"
+            "UPDATE `{$this->table}` SET current_temperature = ?, last_temperature_check = NOW() WHERE id = ?"
         )->execute([$temp, $storageId]);
     }
 
@@ -143,5 +150,21 @@ class StorageArea extends Model {
         );
         $stmt->execute([$storageId, $hours]);
         return $stmt->fetchAll();
+    }
+}
+
+class Notification extends Model {
+    protected string $table = 'notifications';
+
+    public function __construct(?PDO $pdo = null) {
+        parent::__construct($pdo ?: tenant_pdo());
+    }
+}
+
+class NotificationSettings extends Model {
+    protected string $table = 'notification_settings';
+
+    public function __construct(?PDO $pdo = null) {
+        parent::__construct($pdo ?: tenant_pdo());
     }
 }

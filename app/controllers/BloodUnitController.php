@@ -4,7 +4,7 @@ class BloodUnitController {
     private BloodUnit $model;
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
-        $this->model = new BloodUnit($pdo);
+        $this->model = new BloodUnit();
     }
 
     public function add(array $data, int $actorId, int $bankId): array {
@@ -31,7 +31,6 @@ class BloodUnitController {
                 'collection_date'  => $coll,
                 'expiry_date'      => $exp,
                 'donor_id'         => $donorId,
-                'blood_bank_id'    => $bankId,
                 'storage_location' => $loc,
                 'status'           => 'available',
                 'created_by'       => $actorId,
@@ -44,14 +43,14 @@ class BloodUnitController {
     }
 
     public function list(array $filters, ?int $bankId, int $page = 1, int $perPage = 20): array {
-        // If no bank context, return all (super_admin).  Otherwise scope to the bank.
+        $pdo = $this->model->pdo();
+        $master = MASTER_DB;
         $sql = "SELECT bu.*, bb.name AS blood_bank_name, u.first_name AS donor_first, u.last_name AS donor_last
                 FROM `blood_units` bu
-                LEFT JOIN `blood_banks` bb ON bb.id = bu.blood_bank_id
-                LEFT JOIN `users` u       ON u.id  = bu.donor_id
+                LEFT JOIN `{$master}`.`blood_banks` bb ON bb.id = ?
+                LEFT JOIN `{$master}`.`users` u       ON u.id  = bu.donor_id
                 WHERE 1=1";
-        $params = [];
-        if ($bankId) { $sql .= " AND bu.blood_bank_id = ?"; $params[] = $bankId; }
+        $params = [$bankId ?: 0];
         if (!empty($filters['blood_group']) && in_array($filters['blood_group'], BLOOD_GROUPS, true)) {
             $sql .= " AND bu.blood_group = ?"; $params[] = $filters['blood_group'];
         }
@@ -63,7 +62,7 @@ class BloodUnitController {
         }
         $offset = max(0, ($page - 1) * $perPage);
         $sql .= " ORDER BY bu.expiry_date ASC LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
     }

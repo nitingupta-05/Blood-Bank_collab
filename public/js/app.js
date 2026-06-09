@@ -182,10 +182,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await API.get('search/global', { q });
                     const items = data.items || [];
                     searchResults.innerHTML = items.length ? items.map(i => `
-                        <a class="global-search-item" href="${i.url}">
-                            <div class="global-search-type">${i.type}</div>
-                            <div style="font-weight:700;">${i.title}</div>
-                            <div class="text-muted" style="font-size:0.85rem;">${i.subtitle || ''}</div>
+                        <a class="global-search-item" href="${htmlEscape(i.url || '')}">
+                            <div class="global-search-type">${htmlEscape(i.type || '')}</div>
+                            <div style="font-weight:700;">${htmlEscape(i.title || '')}</div>
+                            <div class="text-muted" style="font-size:0.85rem;">${htmlEscape(i.subtitle || '')}</div>
                         </a>
                     `).join('') : '<div class="global-search-item text-muted">No matching records.</div>';
                     searchResults.classList.add('active');
@@ -209,9 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const notifs = l.notifications || [];
             np.innerHTML = notifs.length ? notifs.map(n => `
                 <div class="notification-item">
-                    <div style="font-weight:700;">${String(n.type).replace('_', ' ')}</div>
-                    <div style="font-size:0.9rem;">${n.message}</div>
-                    <div class="text-muted" style="font-size:0.75rem;">${n.channel} | ${n.delivery_status} | ${n.created_at}</div>
+                    <div style="font-weight:700;">${htmlEscape(String(n.type).replace('_', ' '))}</div>
+                    <div style="font-size:0.9rem;">${htmlEscape(n.message || '')}</div>
+                    <div class="text-muted" style="font-size:0.75rem;">${htmlEscape(n.channel || '')} | ${htmlEscape(n.delivery_status || '')} | ${htmlEscape(n.created_at || '')}</div>
                 </div>
             `).join('') : '<div class="notification-item text-muted">No notifications yet.</div>';
         } catch (e) { /* swallow */ }
@@ -244,14 +244,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const u = data.user || {};
             const b = data.blood_bank || {};
             pp.innerHTML = `
-                <div style="font-weight:800;margin-bottom:0.5rem;font-size:1.1rem;">${b.name || `${u.first_name||''} ${u.last_name||''}`}</div>
-                <div class="profile-row"><span>Role</span><strong>${(u.role||'').replace('_',' ')}</strong></div>
-                <div class="profile-row"><span>Email</span><strong>${u.email||'-'}</strong></div>
-                <div class="profile-row"><span>Phone</span><strong>${b.phone||u.phone||'-'}</strong></div>
-                <div class="profile-row"><span>City</span><strong>${b.city||u.city||'-'}</strong></div>
-                <div class="profile-row"><span>Address</span><strong>${b.address||u.address||'-'}</strong></div>
-                ${b.contact_person ? `<div class="profile-row"><span>Contact</span><strong>${b.contact_person}</strong></div>` : ''}
-                ${b.capacity ? `<div class="profile-row"><span>Capacity</span><strong>${b.capacity} units</strong></div>` : ''}
+                <div style="font-weight:800;margin-bottom:0.5rem;font-size:1.1rem;">${htmlEscape(b.name || `${u.first_name||''} ${u.last_name||''}`)}</div>
+                <div class="profile-row"><span>Role</span><strong>${htmlEscape((u.role||'').replace('_',' '))}</strong></div>
+                <div class="profile-row"><span>Email</span><strong>${htmlEscape(u.email||'-')}</strong></div>
+                <div class="profile-row"><span>Phone</span><strong>${htmlEscape(b.phone||u.phone||'-')}</strong></div>
+                <div class="profile-row"><span>City</span><strong>${htmlEscape(b.city||u.city||'-')}</strong></div>
+                <div class="profile-row"><span>Address</span><strong>${htmlEscape(b.address||u.address||'-')}</strong></div>
+                ${b.contact_person ? `<div class="profile-row"><span>Contact</span><strong>${htmlEscape(b.contact_person)}</strong></div>` : ''}
+                ${b.capacity ? `<div class="profile-row"><span>Capacity</span><strong>${htmlEscape(String(b.capacity))} units</strong></div>` : ''}
             `;
         } catch (e) { /* swallow */ }
     }
@@ -454,6 +454,13 @@ class NotificationManager {
     }
 }
 
+/* Safe HTML escaping for DOM insertion. */
+function htmlEscape(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 /* Legacy global open/close helpers (used by the dashboard's
  * on-page onclick handlers). */
 function openAddBloodModal()   { Modal.open('addBloodModal'); }
@@ -464,6 +471,7 @@ function openAddStorageModal() { Modal.open('addStorageModal'); }
 function closeAddStorageModal(){ Modal.close('addStorageModal'); }
 
 /* Expose to global scope for inline view scripts. */
+window.htmlEscape       = htmlEscape;
 window.Toast             = Toast;
 window.Modal             = Modal;
 window.Counter           = Counter;

@@ -20,6 +20,11 @@ function dispatch_web_route(string $route, string $method, PDO $pdo): void {
             RoleMiddleware::requireRole($opts['roles']);
         }
 
+        /* CSRF check for state-changing methods. */
+        if (in_array($method, ['POST', 'PUT', 'DELETE'], true) && empty($opts['public'])) {
+            require_csrf();
+        }
+
         /* Call handler. */
         if (is_array($handler) && is_string($handler[0])) {
             [$class, $action] = $handler;

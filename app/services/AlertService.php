@@ -56,7 +56,8 @@ class AlertService {
     }
 
     public function storageTemperatureAlert(int $storageId, float $temp): void {
-        $stmt = $this->pdo->prepare("SELECT name FROM `storage_areas` WHERE id = ?");
+        $tpdo = tenant_pdo() ?: $this->pdo;
+        $stmt = $tpdo->prepare("SELECT name FROM `storage_areas` WHERE id = ?");
         $stmt->execute([$storageId]);
         $sa = $stmt->fetch();
         if (!$sa) return;

@@ -157,11 +157,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         (l.items || []).forEach(d => {
             const tr = document.createElement('tr');
             const badge = d.eligibility_status === 'eligible' ? 'badge-success' : 'badge-warning';
-            tr.innerHTML = `<td>${d.first_name} ${d.last_name}</td><td><span class="blood-group o-positive">${d.blood_group}</span></td>
-                <td>${d.age || '-'}</td><td>${d.phone || '-'}</td>
-                <td>${d.last_donation_date || '-'}</td><td>${d.total_donations}</td>
-                <td><span class="badge ${badge}">${d.eligibility_status}</span></td>
-                <td>${d.city || ''}</td>`;
+            tr.innerHTML = `<td>${htmlEscape(d.first_name)} ${htmlEscape(d.last_name)}</td><td><span class="blood-group o-positive">${htmlEscape(d.blood_group)}</span></td>
+                <td>${htmlEscape(d.age || '-')}</td><td>${htmlEscape(d.phone || '-')}</td>
+                <td>${htmlEscape(d.last_donation_date || '-')}</td><td>${d.total_donations}</td>
+                <td><span class="badge ${badge}">${htmlEscape(d.eligibility_status)}</span></td>
+                <td>${htmlEscape(d.city || '')}</td>`;
             tb.appendChild(tr);
         });
         if (!(l.items || []).length) tb.innerHTML = '<tr><td colspan="8" class="text-muted text-center">No donors yet.</td></tr>';

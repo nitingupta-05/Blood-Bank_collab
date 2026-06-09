@@ -69,10 +69,10 @@
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
                     <div>
                         <div style="font-weight:700; color: var(--text-dark);">
-                            ${er.first_name || ''} ${er.last_name || ''} - ${b.text}
+                            ${htmlEscape(er.first_name || '')} ${htmlEscape(er.last_name || '')} - ${b.text}
                         </div>
                         <div class="text-muted" style="font-size:0.9rem;">
-                            Posted ${timeText || 'just now'} • Hospital city: ${er.city || ''}
+                            Posted ${timeText || 'just now'} • Hospital city: ${htmlEscape(er.city || '')}
                         </div>
                     </div>
                     <span class="badge ${b.cls}">
@@ -85,9 +85,9 @@
                         <div class="text-muted" style="font-size:0.85rem; margin-bottom:0.25rem;">Blood Needed</div>
                         <div style="display:flex; align-items:center; gap:0.75rem;">
                             <div style="width:44px; height:44px; border-radius:10px; background: rgba(211,47,47,0.08); display:flex; align-items:center; justify-content:center; font-weight:800;">
-                                ${er.blood_group}
+                                ${htmlEscape(er.blood_group)}
                             </div>
-                            <div><div style="font-weight:700;">${er.blood_group}</div></div>
+                            <div><div style="font-weight:700;">${htmlEscape(er.blood_group)}</div></div>
                         </div>
                     </div>
                     <div>
@@ -96,12 +96,12 @@
                     </div>
                     <div>
                         <div class="text-muted" style="font-size:0.85rem; margin-bottom:0.25rem;">Location</div>
-                        <div style="font-weight:700;">${er.location || ''}</div>
+                        <div style="font-weight:700;">${htmlEscape(er.location || '')}</div>
                     </div>
                 </div>
 
                 <div class="mt-3" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                    <a class="btn btn-secondary btn-sm" href="tel:${er.phone || ''}">
+                    <a class="btn btn-secondary btn-sm" href="tel:${htmlEscape(er.phone || '')}">
                         <i class="fas fa-phone"></i> Call Hospital
                     </a>
                     <button class="btn btn-primary btn-sm" onclick="Toast.info('Emergency response workflow is admin-side in this MVP.');">

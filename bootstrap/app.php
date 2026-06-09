@@ -64,6 +64,7 @@ $GLOBALS['pdo'] = $pdo;
  * If the helper hasn't started it yet (e.g. for routes that don't use auth),
  * ensure the session is up before continuing. */
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.use_strict_mode', '1');
     session_set_cookie_params([
         'lifetime' => SESSION_LIFETIME,
         'path'     => '/',
@@ -78,6 +79,21 @@ enforce_session_timeout();
 
 /* Refresh the CSRF token on first use. */
 ensure_csrf_token();
+
+/* Constants for multi-tenant setup. */
+define('MASTER_DB', DB_NAME);
+TenantHelper::ensureMasterSchema($pdo);
+
+/* Resolve tenant database for the current user. */
+$GLOBALS['tenantPdo'] = null;
+$user = current_user();
+if ($user) {
+    try {
+        $GLOBALS['tenantPdo'] = TenantHelper::getTenantPdo($user, $pdo);
+    } catch (Throwable $e) {
+        error_log('[tenant] Failed to connect: ' . $e->getMessage());
+    }
+}
 
 /* Security headers. */
 send_security_headers();

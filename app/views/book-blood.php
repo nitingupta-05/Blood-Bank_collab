@@ -45,7 +45,12 @@ document.getElementById('bookForm').addEventListener('submit', async e => {
     const body = Object.fromEntries(fd.entries());
     body.quantity = parseInt(body.quantity, 10);
     const r = await fetch(`<?php echo APP_URL; ?>/api.php?route=public/booking`, {
-        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+        method: 'POST',
+        headers: {
+            'Content-Type':'application/json',
+            'X-CSRF-TOKEN': '<?php echo generate_csrf_token(); ?>'
+        },
+        body: JSON.stringify(body)
     });
     const data = await r.json();
     if (data.ok) { Toast.success('Booking submitted! Reference #' + data.id); e.target.reset(); }

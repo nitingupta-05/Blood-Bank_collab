@@ -21,7 +21,7 @@ class User extends Model {
              WHERE password_reset_token = ? AND password_reset_expires > NOW()
              LIMIT 1"
         );
-        $stmt->execute([$token]);
+        $stmt->execute([hash('sha256', $token)]);
         $row = $stmt->fetch();
         return $row ?: null;
     }

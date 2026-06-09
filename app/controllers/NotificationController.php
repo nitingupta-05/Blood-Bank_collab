@@ -7,8 +7,12 @@ class NotificationController {
         $this->dispatcher = new NotificationDispatcher($pdo);
     }
 
+    private function tpdo(): PDO {
+        return tenant_pdo() ?: $this->pdo;
+    }
+
     public function list(int $userId, int $limit = 50): array {
-        $stmt = $this->pdo->prepare(
+        $stmt = $this->tpdo()->prepare(
             "SELECT id, type, message, channel, delivery_status, related_type, related_id, created_at
              FROM `notifications` WHERE user_id = ? ORDER BY created_at DESC LIMIT " . (int) $limit
         );
@@ -17,18 +21,18 @@ class NotificationController {
     }
 
     public function countPending(int $userId): int {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS c FROM `notifications` WHERE user_id = ? AND delivery_status = 'pending'");
+        $stmt = $this->tpdo()->prepare("SELECT COUNT(*) AS c FROM `notifications` WHERE user_id = ? AND delivery_status = 'pending'");
         $stmt->execute([$userId]);
         return (int) $stmt->fetch()['c'];
     }
 
     public function markRead(int $userId, int $notificationId): bool {
-        $stmt = $this->pdo->prepare("UPDATE `notifications` SET delivery_status = 'read' WHERE id = ? AND user_id = ?");
+        $stmt = $this->tpdo()->prepare("UPDATE `notifications` SET delivery_status = 'read' WHERE id = ? AND user_id = ?");
         return $stmt->execute([$notificationId, $userId]);
     }
 
     public function markAllRead(int $userId): int {
-        $stmt = $this->pdo->prepare("UPDATE `notifications` SET delivery_status = 'read' WHERE user_id = ? AND delivery_status IN ('pending','sent')");
+        $stmt = $this->tpdo()->prepare("UPDATE `notifications` SET delivery_status = 'read' WHERE user_id = ? AND delivery_status IN ('pending','sent')");
         $stmt->execute([$userId]);
         return $stmt->rowCount();
     }

@@ -58,7 +58,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Password *</label>
-                        <input type="password" name="password" class="form-control" minlength="8" required>
+                        <input type="password" name="password" class="form-control" minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}" title="Must be at least 8 characters with uppercase, lowercase, and a number" required>
+                        <div class="text-muted" style="font-size:0.85rem;">Min 8 characters with uppercase, lowercase, and a number.</div>
                     </div>
                 </div>
                 <button class="btn btn-primary mt-4" type="submit"><i class="fas fa-paper-plane"></i> Register Blood Bank</button>
@@ -77,7 +78,11 @@ document.getElementById('bloodBankRegisterForm').addEventListener('submit', asyn
 
     const response = await fetch(`<?php echo APP_URL; ?>/api.php?route=blood-banks/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '<?php echo generate_csrf_token(); ?>'
+        },
         body: JSON.stringify(body)
     });
     const data = await response.json();

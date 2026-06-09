@@ -75,6 +75,21 @@ class AuthController {
             $_SESSION['error'] = 'Phone, address, and city are required.';
             header('Location: ' . app_url('register')); exit;
         }
+        $preferredTenantDb = null;
+        if ($preferredBank > 0) {
+            TenantHelper::ensureMasterSchema($this->pdo);
+            $stmt = $this->pdo->prepare("SELECT tenant_db_name FROM `blood_banks` WHERE id = ?");
+            $stmt->execute([$preferredBank]);
+            $bank = $stmt->fetch();
+            if (!$bank) {
+                $_SESSION['error'] = 'Please select a valid blood bank.';
+                header('Location: ' . app_url('register')); exit;
+            }
+            $preferredTenantDb = $bank['tenant_db_name'] ?: TenantHelper::createDatabase($this->pdo, $preferredBank);
+            if (empty($bank['tenant_db_name'])) {
+                $this->pdo->prepare("UPDATE `blood_banks` SET tenant_db_name = ? WHERE id = ?")->execute([$preferredTenantDb, $preferredBank]);
+            }
+        }
         $lastDonationDate = null; $nextEligible = null; $eligible = true;
         if ($lastDonation !== '') {
             if (!ValidationHelper::dateYmd($lastDonation)) {
@@ -104,7 +119,7 @@ class AuthController {
             'is_active'  => 1,
         ]);
 
-        (new Donor($this->pdo))->create([
+        $donorData = [
             'user_id'              => $userId,
             'preferred_blood_bank_id' => $preferredBank > 0 ? $preferredBank : null,
             'blood_group'          => $bloodGroup,
@@ -115,7 +130,14 @@ class AuthController {
             'last_donation_date'   => $lastDonationDate,
             'next_eligible_date'   => $nextEligible,
             'eligibility_status'   => $eligible ? 'eligible' : 'ineligible',
-        ]);
+        ];
+        (new Donor($this->pdo))->create($donorData);
+
+        if ($preferredTenantDb) {
+            $tenantData = $donorData;
+            unset($tenantData['preferred_blood_bank_id']);
+            (new Donor(TenantHelper::connect($preferredTenantDb)))->create($tenantData);
+        }
 
         audit($this->pdo, 'auth.register_donor', (int) $userId);
         $_SESSION['success'] = 'Donor registered successfully. Please log in.';
@@ -131,10 +153,11 @@ class AuthController {
         $user = (new User($this->pdo))->findByEmail($email);
         if ($user) {
             $token   = bin2hex(random_bytes(32));
+            $hash    = hash('sha256', $token);
             $expires = date('Y-m-d H:i:s', time() + 3600);
             $this->pdo->prepare(
                 "UPDATE `users` SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?"
-            )->execute([$token, $expires, (int) $user['id']]);
+            )->execute([$hash, $expires, (int) $user['id']]);
 
             $link = APP_URL . '/index.php?route=reset-password&token=' . urlencode($token);
             $sent = EmailService::send($email, 'Password reset', "Use this link to reset your password: {$link}");

@@ -5,7 +5,7 @@ class StorageController {
     private AlertService $alerts;
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
-        $this->model = new StorageArea($pdo);
+        $this->model = new StorageArea();
         $this->alerts = new AlertService($pdo);
     }
 
@@ -19,7 +19,6 @@ class StorageController {
         $temp = isset($data['temperature']) && is_numeric($data['temperature']) ? (float) $data['temperature'] : null;
 
         $id = $this->model->create([
-            'blood_bank_id' => $bankId,
             'name'          => $name,
             'capacity'      => $cap,
             'current_temperature' => $temp,

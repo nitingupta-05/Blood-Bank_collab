@@ -1,7 +1,11 @@
 <?php
 class ReportController {
     private PDO $pdo;
-    public function __construct(PDO $pdo) { $this->pdo = $pdo; }
+    private ?PDO $tpdo;
+    public function __construct(PDO $pdo) { 
+        $this->pdo = $pdo; 
+        $this->tpdo = tenant_pdo() ?: $pdo;
+    }
 
     public function inventory(array $filters = []): array {
         $where = [];
@@ -12,24 +16,27 @@ class ReportController {
         if (!empty($filters['status']) && in_array($filters['status'], BLOOD_UNIT_STATUS, true)) {
             $where[] = 'bu.status = ?'; $params[] = $filters['status'];
         }
+        $master = MASTER_DB;
         $sql = "SELECT bu.barcode, bu.blood_group, bu.status, bu.collection_date, bu.expiry_date,
                        bu.storage_location, bb.name AS blood_bank_name,
                        CONCAT_WS(' ', u.first_name, u.last_name) AS donor_name
                 FROM `blood_units` bu
-                LEFT JOIN `blood_banks` bb ON bb.id = bu.blood_bank_id
-                LEFT JOIN `users` u       ON u.id  = bu.donor_id"
+                LEFT JOIN `{$master}`.`blood_banks` bb ON bb.id = ?
+                LEFT JOIN `{$master}`.`users` u       ON u.id  = bu.donor_id"
             . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
             . " ORDER BY bu.blood_group, bu.expiry_date ASC";
-        $stmt = $this->pdo->prepare($sql);
+        $params = array_merge([0], $params);
+        $stmt = $this->tpdo->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
     public function donors(): array {
-        return $this->pdo->query(
+        $master = MASTER_DB;
+        return $this->tpdo->query(
             "SELECT u.first_name, u.last_name, u.phone, u.city, d.blood_group, d.age, d.weight,
                     d.eligibility_status, d.last_donation_date, d.total_donations
-             FROM `donors` d JOIN `users` u ON u.id = d.user_id
+             FROM `donors` d JOIN `{$master}`.`users` u ON u.id = d.user_id
              ORDER BY d.created_at DESC"
         )->fetchAll();
     }

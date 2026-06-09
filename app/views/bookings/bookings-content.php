@@ -145,9 +145,9 @@ const Bookings = {
             const actions = b.status === 'pending' ? `
                 <button class="btn btn-sm btn-success" onclick="Bookings.approve(${b.id})"><i class="fas fa-check"></i></button>
                 <button class="btn btn-sm btn-danger" onclick="Bookings.reject(${b.id})"><i class="fas fa-times"></i></button>` : '';
-            tr.innerHTML = `<td>${hospital}</td><td>${b.blood_group}</td><td>${b.quantity} units</td>
-                <td>${b.required_date}</td><td>${b.patient_name || '-'}</td>
-                <td><span class="badge badge-primary">${b.status}</span></td><td>${actions}</td>`;
+            tr.innerHTML = `<td>${htmlEscape(hospital)}</td><td>${htmlEscape(b.blood_group)}</td><td>${b.quantity} units</td>
+                <td>${htmlEscape(b.required_date)}</td><td>${htmlEscape(b.patient_name || '-')}</td>
+                <td><span class="badge badge-primary">${htmlEscape(b.status)}</span></td><td>${actions}</td>`;
             tb.appendChild(tr);
         });
         if (!(l.items || []).length) tb.innerHTML = '<tr><td colspan="7" class="text-muted text-center">No bookings.</td></tr>';
